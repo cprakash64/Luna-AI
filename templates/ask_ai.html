@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Luna</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='Luna_favicon.jpg') }}">
+  <style>
+    /* Common styles */
+    body,
+    html {
+      height: 100%;
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      /* font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; */
+    }
+
+    .sidebar {
+      width: 25%;
+      height: 100%;
+      float: left;
+      padding: 20px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      position: relative;
+    }
+
+    .transcribed-text-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .transcribed-text {
+      font-size: 24px;
+      color: #ecf0f1;
+      margin-left: 75px;
+    }
+
+    .transcribed-text-container {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      margin-bottom: 10px;
+      max-height: 686px; /* Fixed height */
+    }
+
+    .transcribed-text-box {
+      flex-grow: 1;
+      padding: 15px;
+      background-color: #1F2D3D;
+      border-radius: 8px;
+      overflow-y: auto;
+      max-height: 800%; /* Fixed height for the box */
+    }
+
+    .text-content {
+      word-wrap: break-word;
+      color: #ecf0f1;
+      font-size: 15px; 
+    }
+
+    .main-content {
+      width: 75%;
+      height: 100%;
+      float: left;
+      padding: 10px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: margin 0.3s ease, width 0.3s ease;
+      /* Smooth transition for changes */
+    }
+
+    .main-content-centered {
+      margin-left: auto;
+      margin-right: auto;
+      width: 60%;
+      /* Adjust width as needed to center the content */
+      float: none;
+      /* No float to allow centering */
+    }
+
+    .header {
+      padding: 15px;
+      font-size:  18px; /* originally it was 28px */
+      text-align: center;
+      margin-bottom: 20px;
+      border-radius: 7px;
+      border: none;
+      width: 100%;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .input-area {
+      padding: 10px;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      border-radius: 10px;
+      position: fixed;
+      bottom: 0;
+      width: 75%;
+    }
+
+    .input-area textarea {
+      width: calc(100% - 40px);
+      border: 1px solid #34495e;
+      border-radius: 10px;
+      padding: 16px;
+      resize: none;
+      overflow-y: auto;
+      max-height: 250px;
+      /* Height of 07 lines */
+    }
+
+    .send-button {
+      padding: 10px;
+      background-color: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 23px;
+      transition: background-color 0.3s ease;
+    }
+
+    .chat-area {
+      overflow-y: auto;
+      padding: 15px;
+      margin-bottom: 100px;
+    }
+
+    .chat-message {
+      padding: 10px;
+      border-radius: 8px;
+      margin: 5px;
+      max-width: 80%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .user-message {
+      margin-left: auto;
+      white-space: pre-wrap;
+      font-size: 14px;
+    }
+
+    .ai-message {
+      margin-right: auto;
+      border-radius: 10px;
+      padding: 10px;
+      margin: 5px 0;
+      font-size: 14px;
+    }
+
+    .thinking-animation {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .thinking-dot {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background-size: 300% 300%;
+      animation: bounce 0.6s infinite alternate, colorShift 3s infinite linear;
+    }
+
+    .thinking-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .thinking-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes bounce {
+      from {
+        transform: translateY(0);
+      }
+
+      to {
+        transform: translateY(-5px);
+      }
+    }
+
+    @keyframes colorShift {
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    .typing-container {
+      display: inline-block;
+      overflow: hidden;
+      white-space: nowrap;
+      border-right: 2px solid #3498db;
+      /* Cursor color */
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      50% {
+        border-color: transparent;
+      }
+    }
+
+    #toggleButton {
+      position: fixed;
+      top: 12px;
+      left: 10px;
+      /* Start in the top left corner of the sidebar */
+      z-index: 1001;
+      /* Above other content */
+      background-color: #34495e;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 15px;
+      font-size: 18px;
+      cursor: pointer;
+      transition: background-color 0.3s, left 0.3s, top 0.3s;
+    }
+
+    #toggleButton:hover {
+      background-color: #2980b9;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background-color: #2980b9;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      width: calc(100% - 40px); /* Full width of sidebar minus padding */
+      margin-top: auto;
+    }
+
+    .user-info:hover .logout-button {
+      display: block;
+    }
+
+    .user-initials {
+      width: 40px;
+      height: 40px;
+      background-color: #34495e;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 10px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .user-greeting {
+      font-size: 14px;
+      flex-grow: 1;
+    }
+
+    .logout-button {
+      display: none;
+      padding: 10px 20px;
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+      margin-left: 10px;
+    }
+
+    .logout-button:hover {
+      background-color: #c0392b;
+    }
+
+    /* Dark mode styles (default) */
+    body,
+    html {
+      background-color: #16202A;
+    }
+
+    .sidebar {
+      background-color: #1F2D3D;
+      color: #ecf0f1;
+    }
+
+    .text-content {
+      color: #ecf0f1;
+    }
+
+    .header {
+      background-color: #16202A; /* Originally the color was: #2980b9 */
+      color: #ffffff;
+    }
+
+    .header:hover {
+      background-color: #2473a6;
+    }
+
+    .input-area {
+      background-color: #1F2D3D;
+    }
+
+    .input-area textarea {
+      background-color: #16202A;
+      color: #ecf0f1;
+    }
+
+    .send-button {
+      color: #27ae60;
+    }
+
+    .user-message {
+      background-color: #7f8c8d;
+      color: white;
+    }
+
+    .ai-message {
+      background-color: #3498db;
+      color: white;
+    }
+
+    .thinking-dot {
+      background-image: linear-gradient(45deg, #007bff, #0056b3, #003d80, #00214d, #000b1a);
+    }
+
+    ::-webkit-scrollbar {
+      width: 12px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #1F2D3D;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #2980b9;
+      border-radius: 6px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #2473a6;
+    }
+
+    /* Light mode styles */
+    @media (prefers-color-scheme: light) {
+
+      body,
+      html {
+        background-color: #f0f2f5;
+      }
+
+      .sidebar {
+        background-color: #34495e;
+        color: #ecf0f1;
+      }
+
+      .header {
+        background-color: #2980b9;
+        color: #ffffff;
+      }
+
+      .header:hover {
+        background-color: #2473a6;
+      }
+
+      .input-area {
+        background-color: #ecf0f1;
+      }
+
+      .input-area textarea {
+        background-color: #ffffff;
+        color: #34495e;
+      }
+
+      .send-button {
+        color: #27ae60;
+      }
+
+      .user-message {
+        background-color: #7f8c8d;
+        color: white;
+      }
+
+      .ai-message {
+        background-color: #ecf0f1;
+        color: #2c3e50;
+      }
+
+      .thinking-dot {
+        background-image: linear-gradient(45deg, #ff9a9e, #fad0c4, #fad0c4, #ffd1ff);
+      }
+
+      ::-webkit-scrollbar {
+        width: 12px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #384c5c;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: #2980b9;
+        border-radius: 6px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: #217dbb;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <button id="toggleButton" onclick="toggleSidebar()">☰</button>
+
+  <div class="sidebar" id="sidebar">
+    <div class="transcribed-text-header">
+      <div class="transcribed-text">About the Video</div> <!-- Originally Transcribed Text-->
+      <button id="toggleButton" onclick="toggleSidebar()">☰</button>
+    </div>
+    <div class="transcribed-text-container">
+      <div class="transcribed-text-box">
+        <div class="text-content">
+          {{ transcription | safe }}
+        </div>
+      </div>
+    </div>
+    <div class="user-info">
+      <div class="user-initials">L</div>
+      <div class="user-greeting">Hello, Luna</div>
+      <button class="logout-button" onclick="logout()">Logout</button>
+    </div>
+  </div>
+  <div class="main-content" id="mainContent">
+    <button class="header" onclick="window.location.href = '/';">Ask Luna</button>
+    <div class="chat-area" id="chatArea">
+      <!-- Chat content will be dynamically inserted here -->
+    </div>
+    <div class="input-area">
+      <textarea id="userInput" placeholder="Message Luna..." rows="1"></textarea>
+      <button class="send-button" onclick="askAI()">&#x27A4;</button> <!-- Unicode for right arrow -->
+    </div>
+  </div>
+  <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+  <script>
+  const socket = io();
+  let isVisible = true;
+  let conversationHistory = []; // Store the entire conversation
+
+  function toggleSidebar() {
+    var sidebar = document.getElementById('sidebar');
+    var mainContent = document.getElementById('mainContent');
+    var inputArea = document.querySelector('.input-area');
+    var header = document.querySelector('.header');
+
+    if (sidebar.style.display === 'none') {
+      sidebar.style.display = 'block';
+      mainContent.classList.remove('main-content-centered');
+      inputArea.style.width = '75%';
+    } else {
+      sidebar.style.display = 'none';
+      mainContent.classList.add('main-content-centered');
+      inputArea.style.width = header.offsetWidth + 'px'; // Adjust input area width
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var sidebar = document.getElementById('sidebar');
+    var mainContent = document.getElementById('mainContent');
+    var inputArea = document.querySelector('.input-area');
+
+    if (sidebar.style.display === 'none') {
+      mainContent.classList.add('main-content-centered');
+      inputArea.style.width = '100%'; // Set full width for input area
+    }
+
+    // Add event listener for page visibility change
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Initial call to load transcribed text
+    updateTranscribedText();
+  });
+
+  function handleVisibilityChange() {
+    isVisible = !document.hidden;
+    if (isVisible) {
+      updateChatArea();
+    }
+  }
+
+  function updateTranscribedText() {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "/get-transcription", true);
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+            var transcription = JSON.parse(xhr.responseText).transcription;
+            var textContentDiv = document.querySelector('.text-content');
+            textContentDiv.innerHTML = transcription;
+            textContentDiv.scrollTop = textContentDiv.scrollHeight;
+        }
+    };
+    xhr.send();
+  }
+
+  function askAI() {
+    var userInput = document.getElementById("userInput").value;
+    var chatArea = document.getElementById("chatArea");
+
+    var userDiv = document.createElement("div");
+    userDiv.classList.add("chat-message", "user-message");
+    userDiv.innerHTML = userInput.replace(/\n/g, '<br>');
+    chatArea.appendChild(userDiv);
+    chatArea.scrollTop = chatArea.scrollHeight;
+
+    conversationHistory.push({ role: 'user', content: userInput }); // Store the user's question
+
+    var aiDiv = document.createElement("div");
+    aiDiv.classList.add("chat-message", "ai-message");
+    aiDiv.innerHTML = "<div class='thinking-animation'><div class='thinking-dot'></div><div class='thinking-dot'></div><div class='thinking-dot'></div></div>";
+    chatArea.appendChild(aiDiv);
+
+    var data = { question: userInput };
+    socket.emit('ask_ai', data);
+
+    document.getElementById("userInput").value = "";
+    document.getElementById("userInput").style.height = "16px";
+  }
+
+  socket.on('ai_response', function(data) {
+    var aiDiv = document.querySelector(".ai-message:last-child");
+    aiDiv.innerHTML = "";  // Clear any existing content
+
+    // Only append the image and timestamp if they are explicitly requested
+    if (data.frame_path && data.timestamp !== undefined) {
+        var img = document.createElement('img');
+        img.src = data.frame_path;
+        img.alt = 'Extracted frame';
+        img.style.maxWidth = '100%';
+        aiDiv.appendChild(img);
+
+        var timestampDiv = document.createElement('div');
+        timestampDiv.textContent = 'Timestamp: ' + data.timestamp + ' seconds';
+        aiDiv.appendChild(timestampDiv);
+    }
+
+    // Store the AI's response
+    conversationHistory.push({ role: 'ai', content: data.answer });
+
+    if (isVisible) {
+      // Simulate typing for the AI response message
+      simulateTyping(data.answer, aiDiv);
+    } else {
+      // If not visible, just store the response
+      aiDiv.innerHTML = data.answer;
+    }
+  });
+
+  function simulateTyping(message, element) {
+    element.innerHTML = "";
+    var i = 0;
+    var speed = 50;
+
+    function typeWriter() {
+        if (i < message.length) {
+            element.innerHTML += message.charAt(i);
+            i++;
+            setTimeout(typeWriter, speed);
+        } else {
+            var chatArea = document.getElementById("chatArea");
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+    }
+    typeWriter();
+  }
+
+  function autoGrow(element) {
+    element.style.height = "5px";
+    element.style.height = (element.scrollHeight) + "px";
+    if (element.scrollHeight > 250) {
+      element.style.overflowY = "scroll";
+    } else {
+      element.style.overflowY = "hidden";
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    updateTranscribedText();
+    var userInputField = document.getElementById("userInput");
+    userInputField.addEventListener("keydown", function(event) {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        askAI();
+      } else if (event.key === "Enter" && event.shiftKey) {
+        autoGrow(event.target);
+      } else if (event.key === "Backspace" || event.key === "Delete") {
+        setTimeout(() => {
+          autoGrow(event.target);
+        }, 0);
+      }
+    });
+
+    userInputField.addEventListener("paste", function(event) {
+      setTimeout(() => {
+        autoGrow(event.target);
+      }, 0);
+    });
+
+    userInputField.addEventListener("input", function(event) {
+      autoGrow(event.target);
+    });
+  });
+
+  function toggleLogout() {
+    var logoutButton = document.querySelector('.logout-button');
+    if (logoutButton.style.display === 'block') {
+      logoutButton.style.display = 'none';
+    } else {
+      logoutButton.style.display = 'block';
+    }
+  }
+
+  function logout() {
+    window.location.href = "/logout";
+  }
+
+  function updateChatArea() {
+    var chatArea = document.getElementById("chatArea");
+    chatArea.innerHTML = ""; // Clear the chat area
+
+    conversationHistory.forEach(function(message) {
+      var messageDiv = document.createElement("div");
+      messageDiv.classList.add("chat-message", message.role === 'user' ? 'user-message' : 'ai-message');
+      messageDiv.innerHTML = message.content.replace(/\n/g, '<br>');
+
+      if (message.role === 'ai' && message.frame_path && message.timestamp !== undefined) {
+        var img = document.createElement('img');
+        img.src = message.frame_path;
+        img.alt = 'Extracted frame';
+        img.style.maxWidth = '100%';
+        messageDiv.appendChild(img);
+
+        var timestampDiv = document.createElement('div');
+        timestampDiv.textContent = 'Timestamp: ' + message.timestamp + ' seconds';
+        messageDiv.appendChild(timestampDiv);
+      }
+
+      chatArea.appendChild(messageDiv);
+    });
+
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }
+</script>
+</body>
+
+</html>
+
+<!-- Dark Mode Code -->
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Luna</title>
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #16202A;
+    }
+    .sidebar {
+      background-color: #1F2D3D;
+      color: #ecf0f1;
+      width: 25%;
+      height: 100%;
+      float: left;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+    .transcribed-text {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .text-content {
+      max-height: calc(100% - 60px);
+      overflow-y: auto;
+      word-wrap: break-word;
+      color: #ecf0f1;
+    }
+
+    .main-content {
+      width: 75%;
+      height: 100%;
+      float: left;
+      padding: 10px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .header {
+      background-color: #2980b9;
+      color: #ffffff;
+      padding: 15px;
+      font-size: 28px;
+      text-align: center;
+      margin-bottom: 20px;
+      border-radius: 7px;
+      border: none;
+      width: 100%;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .header:hover {
+      background-color: #2473a6;
+    }
+    
+    .input-area {
+      background-color: #1F2D3D;
+      padding: 10px;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      border-radius: 10px;
+      position: fixed;
+      bottom: 0;
+      width: 75%;
+    }
+    .input-area textarea {
+      width: calc(100% - 40px);
+      background-color: #16202A;
+      color: #ecf0f1;
+      border: 1px solid #34495e;
+      border-radius: 10px;
+      padding: 16px;
+      resize: none;
+      overflow-y: auto;
+      max-height: 250px; /* Height of 14 lines */
+    }
+    .send-button {
+      padding: 10px;
+      background-color: transparent;
+      color: #27ae60;
+      border: none;
+      cursor: pointer;
+      font-size: 23px;
+    }
+
+    .chat-area {
+      overflow-y: auto;
+      padding: 15px;
+      margin-bottom: 100px;
+    }
+
+    .chat-message {
+      padding: 10px;
+      border-radius: 8px;
+      margin: 5px;
+      max-width: 80%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .user-message {
+      margin-left: auto;
+      background-color: #7f8c8d;
+      color: white;
+      white-space: pre-wrap;
+    }
+
+    .ai-message {
+      margin-right: auto;
+      background-color: #3498db;
+      color: white;
+      border-radius: 10px;
+      padding: 10px;
+      margin: 5px 0;
+    }
+
+    /* New thinking animation styles */
+    .thinking-animation {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+    }
+
+    .thinking-dot {
+    width: 13px;
+    height: 13px;
+    background-image: linear-gradient(45deg, #007bff, #0056b3, #003d80, #00214d, #000b1a);
+    background-size: 300% 300%;
+    border-radius: 50%;
+    animation: bounce 0.6s infinite alternate, colorShift 3s infinite linear;
+  }
+
+    .thinking-dot:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .thinking-dot:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+
+    @keyframes bounce {
+    from {
+        transform: translateY(0);
+      }
+    to {
+        transform: translateY(-5px);
+      }
+    }
+
+    @keyframes colorShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+    }
+
+    /* Typing animation styles */
+    .typing-container {
+        display: inline-block;
+        overflow: hidden;
+        white-space: nowrap;
+        border-right: 2px solid #3498db; /* Cursor color */
+        animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+        50% { border-color: transparent; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="transcribed-text">Transcribed Text</div>
+  <div class="text-content">
+    {{ transcription | safe }}
+  </div>
+</div>
+
+<div class="main-content">
+  <button class="header" onclick="window.location.href = '/';">Ask Luna</button>
+  <div class="chat-area" id="chatArea">
+     Chat content will be dynamically inserted here 
+   </div>
+  <div class="input-area">
+    <textarea id="userInput" placeholder="Type your question..." rows="1"></textarea>
+    <button class="send-button" onclick="askAI()">&#x27A4;</button> // Unicode for right arrow -->
+<!-- </div>
+</div>
+<script>
+  function updateTranscribedText() {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "/get-transcription", true);
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+          var transcription = JSON.parse(xhr.responseText).transcription;
+          var textContentDiv = document.querySelector('.text-content');
+          textContentDiv.innerHTML = transcription; // Update the text content
+          textContentDiv.scrollTop = textContentDiv.scrollHeight; // Scroll to the bottom of the transcript
+        }
+    };
+    xhr.send();
+  }
+
+  function askAI() {
+    var userInput = document.getElementById("userInput").value;
+    var chatArea = document.getElementById("chatArea");
+
+    var userDiv = document.createElement("div");
+    userDiv.classList.add("chat-message", "user-message");
+    userDiv.innerHTML = userInput.replace(/\n/g, '<br>'); // Replace newlines with HTML line breaks
+    chatArea.appendChild(userDiv);
+    chatArea.scrollTop = chatArea.scrollHeight; // Scroll to the latest message
+
+    var aiDiv = document.createElement("div");
+    aiDiv.classList.add("chat-message", "ai-message");
+    aiDiv.innerHTML = "<div class='thinking-animation'><div class='thinking-dot'></div><div class='thinking-dot'></div><div class='thinking-dot'></div></div>"; // Show new thinking animation
+    chatArea.appendChild(aiDiv);
+
+    var data = JSON.stringify({ question: userInput });
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/ask_ai", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState == 4) {
+        if (xhr.status == 200) {
+          var response = JSON.parse(xhr.responseText);
+          var aiResponse = "Luna: " + response.answer;
+          setTimeout(() => {
+            aiDiv.innerHTML = ""; // Clear thinking animation
+            simulateTyping(aiResponse, aiDiv); // Simulate typing effect
+          }, 1000); // Adjust delay as needed
+        } else {
+          aiDiv.textContent = "Error: " + xhr.statusText;
+        }
+      }
+    };
+    xhr.send(data);
+    document.getElementById("userInput").value = "";
+    document.getElementById("userInput").style.height = "16px"; // Reset textarea height
+  }
+
+  // Function to simulate typing effect
+  function simulateTyping(message, element) {
+    element.innerHTML = ""; // Clear existing content
+    var i = 0;
+    var speed = 50; // Typing speed in milliseconds
+    function typeWriter() {
+      if (i < message.length) {
+        element.innerHTML += message.charAt(i);
+        i++;
+        setTimeout(typeWriter, speed);
+      } else {
+        // Scroll to the latest message after typing is complete
+        var chatArea = document.getElementById("chatArea");
+        chatArea.scrollTop = chatArea.scrollHeight;
+      }
+    }
+    typeWriter();
+  }
+
+  function autoGrow(element) {
+    element.style.height = "5px";
+    element.style.height = (element.scrollHeight) + "px";
+    if (element.scrollHeight > 336) {
+      element.style.overflowY = "scroll";
+    } else {
+      element.style.overflowY = "hidden";
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    updateTranscribedText();
+    var userInputField = document.getElementById("userInput");
+    userInputField.addEventListener("keydown", function(event) {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        askAI();
+      } else if (event.key === "Enter" && event.shiftKey) {
+        autoGrow(event.target);
+      } else if (event.key === "Backspace" || event.key === "Delete") {
+        setTimeout (() => {
+          autoGrow(event.target);
+        }, 0);
+      }
+    });
+
+    userInputField.addEventListener("paste", function(event) {
+      setTimeout(() => {
+        autoGrow(event.target);
+      }, 0);
+    });
+
+    userInputField.addEventListener("input", function(event) {
+      autoGrow(event.target);
+    });
+  });
+</script>
+</body> -->
+<!-- </html> -->
+
+<!-- Light Mode Code -->
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Luna</title>
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f2f5;
+    }
+    .sidebar {
+      background-color: #34495e;
+      color: #ecf0f1;
+      width: 25%;
+      height: 100%;
+      float: left;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-y: auto; /* Enable vertical scrolling */
+    }
+    .transcribed-text {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .text-content {
+      max-height: calc(100% - 60px);
+      overflow-y: auto; /* Scrollbar for transcribed text */
+      word-wrap: break-word; /* Ensure long words are wrapped */
+    }
+
+    .main-content {
+      width: 75%;
+      height: 100%;
+      float: left;
+      padding: 20px;
+      box-sizing: border-box;
+      display: flex; /* New: Using flexbox for layout */
+      flex-direction: column; /* New: Stack elements vertically */
+    }
+
+    .header {
+      background-color: #2980b9;
+      color: #ffffff;
+      padding: 15px;
+      font-size: 28px;
+      text-align: center;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      border: none; /* Remove default button border */
+      width: 100%; /* Ensure it spans the entire container */
+      cursor: pointer; /* Change cursor to pointer */
+      transition: background-color 0.3s ease;
+    }
+    .header:hover {
+      background-color: #217dbb; /* Slightly darker color on hover */
+    }
+    
+    .chat-area {
+      flex-grow: 1; /* New: chat-area takes available space */
+      overflow-y: auto; /* Scrollbar for overflow content */
+      height: calc(100% - 140px);
+      overflow-y: auto;
+      border: 1px solid #bdc3c7;
+      background-color: #ffffff;
+      padding: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      border-radius: 4px;
+    }
+    /* .input-area {
+      position: fixed;
+      bottom: 0;
+      left: 25%;
+      width: 75%;
+      background-color: #ecf0f1;
+      padding: 15px;
+      box-sizing: border-box;
+      border-top: 1px solid #bdc3c7;
+      border-radius: 4px;
+    } */
+    .input-area {
+      width: 100%; /* Adjust the width */
+      background-color: #ecf0f1;
+      padding: 15px;
+      box-sizing: border-box;
+      border-top: 1px solid #bdc3c7;
+      border-radius: 4px;
+      display: flex; /* Enable flexbox */
+      align-items: center; /* Align items vertically */
+    }
+    .input-area input {
+      width: calc(100% - 110px);
+      padding: 10px;
+      margin-right: 10px;
+      border: 1px solid #bdc3c7;
+      border-radius: 4px;
+    }
+    .input-area button {
+      width: 80px;
+      padding: 10px;
+      background-color: #27ae60;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .input-area button:hover {
+      background-color: #2ecc71;
+    }
+
+    .input-area {
+      display: flex; /* Enable flexbox */
+      align-items: center; /* Align items vertically */
+    }
+
+    .input-area input {
+      flex-grow: 2; /* Allow the input to grow */
+      margin-right: 10px; /* Add some space between input and buttons */
+    }
+
+    .input-area button {
+      flex-shrink: 0; /* Prevent the buttons from shrinking */
+
+      .chat-area {
+      height: calc(100% - 140px);
+      overflow-y: auto; /* Ensure scrollbar for overflow content */
+      border: 1px solid #bdc3c7;
+      background-color: #ffffff;
+      padding: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .chat-message {
+      padding: 10px;
+      border-radius: 8px;
+      margin: 5px;
+      max-width: 80%;
+    }
+
+    .user-message {
+      align-self: flex-end;
+      background-color: #7f8c8d;
+      color: white;
+    }
+
+    ai-message {
+      align-self: flex-start;
+      background-color: #3498db; /* Blue color for Luna's message bubble */
+      color: white; /* White text color for better readability */
+      border-radius: 10px; /* Rounded corners for the bubble effect */
+      padding: 10px; /* Padding inside the bubble */
+      margin: 5px 0; /* Space around the bubble */
+      max-width: 80%; /* Max width for the bubble */
+    }
+
+    /* .ai-message {
+      align-self: flex-start;
+      background-color: #ecf0f1;
+      color: #2c3e50;
+    } */
+    }
+
+    .chat-area {
+      height: calc(100% - 140px);
+      overflow-y: auto; /* Ensure scrollbar for overflow content */
+      border: 1px solid #bdc3c7;
+      background-color: #ffffff;
+      padding: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .chat-message {
+      padding: 10px;
+      border-radius: 8px;
+      margin: 5px;
+      max-width: 80%;
+    }
+
+    .user-message {
+      align-self: flex-end;
+      background-color: #7f8c8d;
+      color: white;
+    }
+
+  .thinking-animation {
+    color: #3498db; /* Luna */
+    animation: blinker 1s linear infinite;
+  }
+
+  @keyframes blinker {
+    50% {
+      opacity: 0;
+    }
+  }
+
+    .ai-message {
+      align-self: flex-start;
+      background-color: #ecf0f1;
+      color: #2c3e50;
+      border-radius: 10px;
+      padding: 10px;
+      margin: 5px 0;
+      max-width: 80%;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="transcribed-text">Transcribed Text</div>
+  <div class="text-content">
+    {{ transcription | safe }}
+  </div>
+</div>
+
+<div class="main-content">
+  <button class="header" onclick="window.location.href = '/';">Ask Luna</button>
+  <div class="chat-area" id="chatArea">
+    <!- Chat content will go here -->
+<!-- </div>
+  <div class="input-area">
+    <input type="text" id="userInput" placeholder="Type your question...">
+    <button onclick="askAI()">Ask</button>
+    <!- <button onclick="window.location.href='/';" style="flex-grow: 1;">Add Another Video or URL</button> Adjusted Button -->
+<!-- </div>
+</div>
+
+<script>
+  function updateTranscribedText() {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "/get-transcription", true);
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+          var transcription = JSON.parse(xhr.responseText).transcription;
+          var textContentDiv = document.querySelector('.text-content');
+          textContentDiv.innerHTML = transcription; // Update the text content
+          textContentDiv.scrollTop = textContentDiv.scrollHeight; // Scroll to the bottom of the transcript
+        }
+    };
+    xhr.send();
+  }
+
+  function askAI() {
+    var userInput = document.getElementById("userInput").value;
+    var chatArea = document.getElementById("chatArea");
+
+    var userDiv = document.createElement("div");
+    userDiv.classList.add("chat-message", "user-message");
+    userDiv.textContent = userInput;
+    chatArea.appendChild(userDiv);
+
+    // Placeholder for AI response with thinking animation
+    var aiDiv = document.createElement("div");
+    aiDiv.classList.add("chat-message", "ai-message");
+    aiDiv.innerHTML = "<span class='thinking-animation'>Luna is thinking...</span>"; // Add your animation HTML here
+    chatArea.appendChild(aiDiv);
+
+    var data = JSON.stringify({ question: userInput });
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/ask_ai", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState == 4) {
+        if (xhr.status == 200) {
+          var response = JSON.parse(xhr.responseText);
+          var aiResponse = "Luna: " + response.answer;
+          aiDiv.innerHTML = ''; // Clear the thinking animation
+          simulateTyping(aiResponse, aiDiv); // Call simulateTyping function
+        } else {
+          aiDiv.textContent = "Error: " + xhr.statusText;
+        }
+      }
+    };
+    xhr.send(data);
+    document.getElementById("userInput").value = "";
+  }
+
+  // Function to simulate typing effect
+  function simulateTyping(message, element) {
+    let i = 0;
+    const speed = 50; // Typing speed in milliseconds
+    function typeWriter() {
+      if (i < message.length) {
+        element.textContent += message.charAt(i);
+        i++;
+        setTimeout(typeWriter, speed);
+      } else {
+        chatArea.scrollTop = chatArea.scrollHeight; // Scroll to the bottom
+      }
+    }
+    typeWriter();
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    updateTranscribedText();
+    document.getElementById("userInput").addEventListener("keydown", function(event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        askAI();
+      }
+    });
+  });
+</script>
+</body>
+</html> -->
